@@ -106,7 +106,7 @@ def extract_authors(elem):
             last_name = name.find('last_name').text
         else:
             last_name = ''
-        author = {'dais_id': dais_id,
+        author = {'dais_id': daisng_id,
                   'seq_no': seq_no,
                   'addr_no': addr_no,
                   'role': role,
