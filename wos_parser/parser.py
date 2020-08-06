@@ -1,3 +1,4 @@
+import re
 from lxml import etree
 
 # For compatibility with Py2.7
@@ -6,40 +7,19 @@ try:
 except ImportError:
     from StringIO import StringIO
 
-def get_record(filehandle):
-    """Iteratively go through file and get text of each WoS record"""
-    record = ''
-    flag = False
-    for line in filehandle:
-        if not flag and not line.startswith('<REC'):
-            continue
-        flag = True
-        record = record + line
-        if line.strip().endswith('</REC>'):
-            return record
-    return None
 
-def parse_records(file, verbose, n_records):
-    records = []
-    count = 0
-    while True:
-        record = get_record(file)
-        count += 1
-        try:
-            rec = etree.fromstring(record)
-            records.append(rec)
-        except:
-            pass
-
-        if verbose:
-            if count % 5000 == 0: print('read total %i records' % count)
-        if record is None:
-            break
-        if n_records is not None:
-            if count >= n_records:
-                break
-
+def parse_records(text, verbose, n_records):
+    parser = etree.XMLParser(encoding='utf-8', ns_clean=True, recover=True)
+    tree = etree.parse(text, parser)
+    root = tree.getroot()
+    for elem in root.getiterator():
+        elem.tag = etree.QName(elem).localname
+    etree.cleanup_namespaces(root)
+    records = root.xpath('REC')
+    if n_records is not None:
+        return records[:n_records]
     return records
+
 
 def read_xml(path_to_xml, verbose=True, n_records=None):
     """
@@ -55,6 +35,7 @@ def read_xml(path_to_xml, verbose=True, n_records=None):
         records = parse_records(file, verbose, n_records)
 
     return records
+
 
 def read_xml_string(xml_string, verbose=True, n_records=None):
     """
@@ -76,6 +57,7 @@ def read_xml_string(xml_string, verbose=True, n_records=None):
 
     return records
 
+
 def extract_wos_id(elem):
     """Return WoS id from given element tree"""
     if elem.find('UID') is not None:
@@ -83,6 +65,7 @@ def extract_wos_id(elem):
     else:
         wos_id = ''
     return wos_id
+
 
 def extract_authors(elem):
     """Extract list of authors from given element tree"""
@@ -117,6 +100,7 @@ def extract_authors(elem):
         authors.append(author)
     return authors
 
+
 def extract_keywords(elem):
     """Extract keywords and keywords plus each separated by semicolon"""
     keywords = elem.findall('./static_data/fullrecord_metadata/keywords/keyword')
@@ -130,6 +114,7 @@ def extract_keywords(elem):
     else:
         keywords_plus_text = ''
     return keywords_text, keywords_plus_text
+
 
 def extract_addresses(elem):
     """Give element tree of WoS, return list of addresses"""
@@ -159,6 +144,7 @@ def extract_addresses(elem):
                              'suborganizations': suborganizations})
         address_dict_all.append(address_dict)
     return address_dict_all
+
 
 def extract_publisher(elem):
     """Extract publisher details"""
@@ -262,6 +248,7 @@ def extract_pub_info(elem):
 
     return pub_info_dict
 
+
 def extract_funding(elem):
     """Extract funding text and funding agency separated by semicolon from WoS
     if see no funding, it will return just Web of Science id and empty string
@@ -282,6 +269,7 @@ def extract_funding(elem):
     return {'wos_id': wos_id,
             'funding_text': fund_text,
             'funding_agency': '; '.join(grant_list)}
+
 
 def extract_conferences(elem):
     """Extract list of conferences from given WoS element tree
@@ -337,6 +325,7 @@ def extract_conferences(elem):
         conferences_list = None
     return conferences_list
 
+
 def extract_references(elem):
     """Extract references from given WoS element tree"""
     wos_id = extract_wos_id(elem)
@@ -354,6 +343,7 @@ def extract_references(elem):
         ref_dict.update({'wos_id': wos_id})
         ref_list.append(ref_dict)
     return ref_list
+
 
 def extract_identifiers(elem):
     """Extract document identifiers from WoS element tree
