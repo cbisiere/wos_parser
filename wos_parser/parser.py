@@ -103,6 +103,45 @@ def extract_authors(elem):
     return authors
 
 
+def extract_contributors(elem):
+    """Extract list of contributors from given element tree."""
+    wos_id = extract_wos_id(elem)
+    contributors = list()
+    names = elem.findall('./static_data/contributors/contributor/')
+    for name in names:
+        orcid_id = name.attrib.get('orcid_id', '')
+        r_id = name.attrib.get('r_id', '')
+        role = name.attrib.get('role', '')
+        seq_no = name.attrib.get('seq_no', '')
+        if name.find('display_name') is not None:
+            display_name = name.find('display_name').text
+        else:
+            display_name = ''
+        if name.find('full_name') is not None:
+            full_name = name.find('full_name').text
+        else:
+            full_name = ''
+        if name.find('first_name') is not None:
+            first_name = name.find('first_name').text
+        else:
+            first_name = ''
+        if name.find('last_name') is not None:
+            last_name = name.find('last_name').text
+        else:
+            last_name = ''
+        contributor = {'orcid_id': orcid_id,
+                       'r_id': r_id,
+                       'role': role,
+                       'seq_no': seq_no,
+                       'display_name': display_name,
+                       'full_name': full_name,
+                       'first_name': first_name,
+                       'last_name': last_name}
+        contributor.update({'wos_id': wos_id})
+        contributors.append(contributor)
+    return contributors
+
+
 def extract_keywords(elem):
     """Extract keywords and keywords plus each separated by semicolon"""
     keywords = elem.findall('./static_data/fullrecord_metadata/keywords/keyword')
