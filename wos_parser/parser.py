@@ -90,7 +90,8 @@ def extract_authors(elem):
     authors = list()
     names = elem.findall('./static_data/summary/names/')
     for name in names:
-        dais_id = name.attrib.get('dais_id', '')
+        dais_id = name.attrib.get('@daisng_id', '')
+        daisng_id = name.attrib.get('daisng_id','')
         seq_no = name.attrib.get('seq_no', '')
         role = name.attrib.get('role', '')
         addr_no = name.attrib.get('addr_no', '')
@@ -107,6 +108,7 @@ def extract_authors(elem):
         else:
             last_name = ''
         author = {'dais_id': dais_id,
+                  'daisng_id': daisng_id,
                   'seq_no': seq_no,
                   'addr_no': addr_no,
                   'role': role,
